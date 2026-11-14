@@ -1,0 +1,50 @@
+{
+  "name": "tap2cal-mcp",
+  "version": "1.0.0",
+  "mcpName": "io.github.MatthiasMAigner/tap2cal-mcp",
+  "description": "MCP server for Tap2Cal, lets an AI assistant turn events into shareable add-to-calendar links.",
+  "type": "module",
+  "bin": {
+    "tap2cal-mcp": "index.js"
+  },
+  "main": "./index.js",
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "calendar",
+    "add-to-calendar",
+    "ics",
+    "google-calendar",
+    "apple-calendar",
+    "outlook",
+    "events",
+    "rsvp",
+    "tap2cal",
+    "claude",
+    "stdio"
+  ],
+  "license": "MIT",
+  "author": "Aigner Software e.U.",
+  "homepage": "https://tap2cal.com/developers/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MatthiasMAigner/tap2cal-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MatthiasMAigner/tap2cal-mcp/issues"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.3.1",
+    "zod": "^4.0.0"
+  }
+}

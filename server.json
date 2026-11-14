@@ -1,0 +1,44 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.MatthiasMAigner/tap2cal-mcp",
+  "title": "Tap2Cal",
+  "description": "Turn events into shareable add-to-calendar links for Google, Apple and Outlook, with RSVPs.",
+  "version": "1.0.0",
+  "websiteUrl": "https://tap2cal.com/developers/",
+  "repository": {
+    "url": "https://github.com/MatthiasMAigner/tap2cal-mcp",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "tap2cal-mcp",
+      "version": "1.0.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "TAP2CAL_API_KEY",
+          "description": "Your Tap2Cal API key from https://tap2cal.com/app/account",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.tap2cal.com",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Bearer followed by your Tap2Cal API key from https://tap2cal.com/app/account",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
