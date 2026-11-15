@@ -54,7 +54,7 @@ const redact = (text) => String(text).split(KEY).join("<your API key>");
 // Error codes of the API, explained so the assistant can tell the user what to do.
 const EXPLAIN = {
   unauthenticated: "The API key is wrong or was deleted. Create a new one at https://tap2cal.com/app/account.",
-  not_found: "No event of this account matches. Use list_my_events to see the events and their links.",
+  not_found: "No event or answer of this account matches. Use list_my_events to see the events and their links, and list_rsvps for the ids of the answers.",
   invalid_name: "The name is missing or longer than 120 characters.",
   invalid_date: "Dates must be YYYY-MM-DD.",
   invalid_time: "Times must be HH:MM, and a start time needs an end time.",
@@ -72,6 +72,9 @@ const EXPLAIN = {
   invalid_image: "The file is not an image Tap2Cal can read. Use JPEG, PNG or WebP.",
   flyer_too_large: "The image is larger than 8 MB.",
   flyer_rejected: "The image was rejected by the automatic check and is not published.",
+  invalid_status: "The answer must be yes or no.",
+  invalid_guests: "Guests must be a whole number from 0 to 10.",
+  too_many_answers: "This event already has 500 answers, which is the limit.",
 };
 
 class ApiError extends Error {}
@@ -224,10 +227,54 @@ server.registerTool("disable_old_link", {
 
 server.registerTool("list_rsvps", {
   title: "List RSVPs",
-  description: "Lists the guests who accepted or declined an event, with the number of people each guest brings along.",
+  description:
+    "Lists the guests who accepted or declined an event, with the number of people each guest " +
+    "brings along, the id of each answer and whether the host added or changed it.",
   inputSchema: z.object({ event: eventArg }),
   annotations: { readOnlyHint: true, openWorldHint: false },
 }, run(({ event }) => api("GET", `${eventPath(event)}/rsvps`)));
+
+const rsvpName = z.string().max(60).describe("The guest's name");
+const rsvpStatus = z.enum(["yes", "no"]).describe("yes if the guest comes, no if not");
+const rsvpGuests = z.number().int().min(0).max(10)
+  .describe("People the guest brings along who weren't invited themselves (only for yes)");
+const rsvpId = z.string().describe("The id of the answer from list_rsvps");
+const rsvpPath = (event, id) => `${eventPath(event)}/rsvps/${encodeURIComponent(id)}`;
+
+server.registerTool("add_rsvp", {
+  title: "Add an RSVP",
+  description:
+    "Adds an answer the host got another way, for example a reply in a chat. It is marked " +
+    "as added by the host and counts like a guest's own answer.",
+  inputSchema: z.object({ event: eventArg, name: rsvpName, status: rsvpStatus, guests: rsvpGuests.optional() }),
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+}, run(({ event, ...rsvp }) => api("POST", `${eventPath(event)}/rsvps`, { json: rsvp })));
+
+server.registerTool("update_rsvp", {
+  title: "Correct an RSVP",
+  description:
+    "Corrects an answer, for example when both partners of a couple answered and each brought " +
+    "the other as a guest. Get the id from list_rsvps. Only the fields you pass change. If the " +
+    "guest answers again later, their new answer counts.",
+  inputSchema: z.object({
+    event: eventArg,
+    rsvpId,
+    name: rsvpName.optional(),
+    status: rsvpStatus.optional(),
+    guests: rsvpGuests.optional(),
+  }),
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+}, run(({ event, rsvpId: id, ...rsvp }) => api("PATCH", rsvpPath(event, id), { json: rsvp })));
+
+server.registerTool("delete_rsvp", {
+  title: "Delete an RSVP",
+  description: "Removes an answer from the list and the counts, for example a duplicate. Get the id from list_rsvps.",
+  inputSchema: z.object({ event: eventArg, rsvpId }),
+  annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+}, run(async ({ event, rsvpId: id }) => {
+  await api("DELETE", rsvpPath(event, id));
+  return { deleted: true };
+}));
 
 async function readImage(imagePath, imageUrl) {
   if (imagePath) {

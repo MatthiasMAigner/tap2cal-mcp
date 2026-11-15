@@ -69,6 +69,9 @@ Wherever an event is needed, its id, any of its links or the full URL works.
 | `update_event` | Changes only the fields you pass, including the link (`slug`) |
 | `disable_old_link` | Turns off an earlier link after the link was changed |
 | `list_rsvps` | Lists who accepted or declined, with the people they bring |
+| `add_rsvp` | Adds an answer that came in another way, for example in a chat |
+| `update_rsvp` | Corrects an answer, for example when both partners of a couple brought each other as a guest |
+| `delete_rsvp` | Removes an answer, for example a duplicate |
 | `set_flyer` | Adds a flyer from a file on this computer or an image URL |
 | `remove_flyer` | Removes the flyer |
 | `delete_event` | Deletes an event and all its links. Can't be undone |

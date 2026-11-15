@@ -81,7 +81,7 @@ try {
 
   const list = await rpc("tools/list", {});
   const names = (list.result?.tools || []).map((x) => x.name).sort();
-  t("nine tools", names.length === 9, JSON.stringify(names));
+  t("twelve tools", names.length === 12, JSON.stringify(names));
   const del = list.result.tools.find((x) => x.name === "delete_event");
   t("delete_event is marked destructive", del?.annotations?.destructiveHint === true);
 
@@ -107,6 +107,22 @@ try {
   reply = { status: 200, body: { rsvps: [{ name: "Anna", status: "yes", guests: 2 }] } };
   r = await call("list_rsvps", { event: "summer-party" });
   t("rsvps: GET and returned", lastRequest.path === "/v1/events/summer-party/rsvps" && /Anna/.test(text(r)));
+
+  reply = { status: 201, body: { rsvp: { id: "host-abc", name: "Carla", status: "yes", guests: 1 } } };
+  r = await call("add_rsvp", { event: "summer-party", name: "Carla", status: "yes", guests: 1 });
+  t("add rsvp: POST with fields", lastRequest.method === "POST" && lastRequest.path === "/v1/events/summer-party/rsvps" &&
+    JSON.stringify(lastRequest.body) === '{"name":"Carla","status":"yes","guests":1}', JSON.stringify(lastRequest));
+
+  reply = { status: 200, body: { rsvp: { id: "abc", name: "Ben", status: "yes", guests: 0 } } };
+  await call("update_rsvp", { event: "summer-party", rsvpId: "abc", guests: 0 });
+  t("update rsvp: PATCH only guests", lastRequest.method === "PATCH" &&
+    lastRequest.path === "/v1/events/summer-party/rsvps/abc" && JSON.stringify(lastRequest.body) === '{"guests":0}',
+    JSON.stringify(lastRequest.body));
+
+  reply = { status: 204, body: null };
+  r = await call("delete_rsvp", { event: "summer-party", rsvpId: "abc" });
+  t("delete rsvp: DELETE and confirms", lastRequest.method === "DELETE" &&
+    lastRequest.path === "/v1/events/summer-party/rsvps/abc" && /deleted/.test(text(r)), text(r));
 
   reply = { status: 200, body: { event } };
   const dir = await mkdtemp(join(tmpdir(), "tap2cal-mcp-"));
